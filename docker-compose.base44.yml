@@ -1,0 +1,73 @@
+x-app: &app
+  build:
+    context: .
+    dockerfile_inline: |
+      FROM node:22
+      RUN npm install -g pnpm@12.3.4
+  working_dir: /app
+  volumes:
+    - ./:/app
+  environment: &app-env
+    DATABASE_URL: postgresql://umami:umami@db:5432/umami
+    NEXT_TELEMETRY_DISABLED: "1"
+    CI: "true"
+    BASE44_PUBLIC_HOST_SUFFIX: ${BASE44_PUBLIC_HOST_SUFFIX}
+    WATCHPACK_POLLING: "true"
+  env_file:
+    - path: /run/base44/app.env
+      required: false
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - umami-db-data:/var/lib/postgresql/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: install deps, generate Prisma client, build tracker/workspace packages, run migrations.
+  setup:
+    <<: *app
+    command:
+      - sh
+      - -ec
+      - |
+        pnpm install --frozen-lockfile
+        pnpm build:db
+        pnpm check:db
+        pnpm build:tracker
+        pnpm build:recorder
+        pnpm build:packages
+        pnpm build:geo || echo "geo download failed; continuing without location data"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    command: ["sh", "-ec", "exec pnpm exec next dev -H 0.0.0.0 -p 3000"]
+    ports:
+      - "3000:3000"
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -m 10 http://localhost:3000/api/heartbeat >/dev/null || (echo 'web: /api/heartbeat failed' && exit 1)"]
+      interval: 15s
+      timeout: 15s
+      start_period: 120s
+      retries: 5
+
+volumes:
+  umami-db-data:

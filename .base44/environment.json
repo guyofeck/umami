@@ -1,0 +1,17 @@
+{
+  "previewPort": 3000,
+  "healthPath": "/api/heartbeat",
+  "startCommand": "docker compose -f docker-compose.base44.yml up -d",
+  "secrets": [
+    {
+      "name": "APP_SECRET",
+      "description": "Optional random string used to sign tokens/hashes; falls back to DATABASE_URL when unset.",
+      "requiredAtBoot": false
+    },
+    {
+      "name": "TWO_FACTOR_ENCRYPTION_KEY",
+      "description": "Optional 64-char hex key (openssl rand -hex 32); needed only for two-factor authentication.",
+      "requiredAtBoot": false
+    }
+  ]
+}
