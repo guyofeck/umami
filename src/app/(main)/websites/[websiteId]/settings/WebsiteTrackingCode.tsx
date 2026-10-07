@@ -1,4 +1,4 @@
-import { Column, Label, Text, TextField } from '@umami/react-zen';
+import { Button, Column, Label, Row, Text, TextField, useToast } from '@umami/react-zen';
 import { useConfig, useMessages } from '@/components/hooks';
 
 const SCRIPT_NAME = 'script.js';
@@ -14,6 +14,7 @@ export function WebsiteTrackingCode({
 }) {
   const { t, messages, labels } = useMessages();
   const config = useConfig();
+  const { toast } = useToast();
 
   const trackerScriptName =
     config?.trackerScriptName?.split(',')?.map((n: string) => n.trim())?.[0] || SCRIPT_NAME;
@@ -32,6 +33,19 @@ export function WebsiteTrackingCode({
 
   const code = `<script defer src="${url}" data-website-id="${websiteId}"></script>`;
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast(
+        t.has(messages.trackingCodeCopied)
+          ? t(messages.trackingCodeCopied)
+          : 'Tracking code copied to clipboard.',
+      );
+    } catch {
+      toast(t(messages.error));
+    }
+  };
+
   return (
     <Column gap>
       {showHeader && <Label>{t(labels.trackingCode)}</Label>}
@@ -44,6 +58,11 @@ export function WebsiteTrackingCode({
         resize="none"
         className="code-textarea"
       />
+      <Row>
+        <Button onPress={handleCopy}>
+          {t.has(labels.copyTrackingCode) ? t(labels.copyTrackingCode) : 'Copy tracking code'}
+        </Button>
+      </Row>
     </Column>
   );
 }
