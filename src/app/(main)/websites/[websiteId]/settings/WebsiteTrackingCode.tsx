@@ -1,4 +1,5 @@
-import { Column, Label, Text, TextField } from '@umami/react-zen';
+import { Column, Label, Row, Text, TextField } from '@umami/react-zen';
+import { CopyButton } from '@/components/common/CopyButton';
 import { useConfig, useMessages } from '@/components/hooks';
 
 const SCRIPT_NAME = 'script.js';
@@ -44,6 +45,9 @@ export function WebsiteTrackingCode({
         resize="none"
         className="code-textarea"
       />
+      <Row>
+        <CopyButton value={code} label="Copy tracking code" showLabel />
+      </Row>
     </Column>
   );
 }

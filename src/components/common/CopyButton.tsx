@@ -2,7 +2,15 @@ import { Button, Icon } from '@umami/react-zen';
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from '@/components/icons';
 
-export function CopyButton({ value, label = 'Copy' }: { value: string; label?: string }) {
+export function CopyButton({
+  value,
+  label = 'Copy',
+  showLabel = false,
+}: {
+  value: string;
+  label?: string;
+  showLabel?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
@@ -34,6 +42,7 @@ export function CopyButton({ value, label = 'Copy' }: { value: string; label?: s
   return (
     <Button variant="quiet" onPress={handleCopy} aria-label={label}>
       <Icon size="sm">{copied ? <Check /> : <Copy />}</Icon>
+      {showLabel && <span role="status">{copied ? 'Copied!' : label}</span>}
     </Button>
   );
 }
